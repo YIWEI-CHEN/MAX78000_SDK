@@ -23,11 +23,11 @@ typedef int16_t q15_t;
 
 /*
   SUMMARY OF OPS
-  Hardware: 46,193,280 ops (45,653,888 macc; 539,392 comp; 0 add; 0 mul; 0 bitwise)
+  Hardware: 12,835,648 ops (12,688,256 macc; 147,392 comp; 0 add; 0 mul; 0 bitwise)
 
   RESOURCE USAGE
-  Weight memory: 39,824 bytes out of 442,368 bytes total (9%)
-  Bias memory:   0 bytes out of 2,048 bytes total (0%)
+  Weight memory: 122,432 bytes out of 442,368 bytes total (28%)
+  Bias memory:   30 bytes out of 2,048 bytes total (1%)
 */
 
 /* Number of outputs for this network */
@@ -90,5 +90,11 @@ int cnn_boost_enable(mxc_gpio_regs_t *port, uint32_t pin);
 
 /* Turn off the boost circuit */
 int cnn_boost_disable(mxc_gpio_regs_t *port, uint32_t pin);
+
+void sigmoid_q17p14_q17p14(const q31_t * vec_in, const uint16_t dim_vec, q31_t * p_out);
+
+q31_t q_div(q31_t a, q31_t b);
+
+q31_t q_mul(q31_t a, q31_t b);
 
 #endif // __CNN_H__

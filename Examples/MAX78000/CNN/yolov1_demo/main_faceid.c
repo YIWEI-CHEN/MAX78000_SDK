@@ -32,20 +32,6 @@
 * ownership rights.
 *******************************************************************************/
 
-// faceid_seq_nobias
-// Created using ./ai8xize.py -e --verbose --top-level cnn -L --test-dir sdk/Examples/MAX78000/CNN --prefix faceid_seq_nobias --checkpoint-file trained/ai85-streaming_seqfaceid_nobias_x6.pth.tar --config-file tests/ai85faceid_nobias.yaml --device 85 --fifo --compact-data --mexpress --display-checkpoint --unload
-
-// Configuring 9 layers:
-// Layer 0: 3x160x120 (streaming HWC/little data), no pooling, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 16x160x120 output
-// Layer 1: 16x160x120 (streaming HWC/little data), 2x2 max pool with stride 2/2, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 32x80x60 output
-// Layer 2: 32x80x60 (HWC/little data), 2x2 max pool with stride 2/2, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 32x40x30 output
-// Layer 3: 32x40x30 (HWC/little data), 2x2 max pool with stride 2/2, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 64x20x15 output
-// Layer 4: 64x20x15 (HWC/little data), 2x2 max pool with stride 2/2, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 64x10x7 output
-// Layer 5: 64x10x7 (HWC/little data), no pooling, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 64x10x7 output
-// Layer 6: 64x10x7 (HWC/little data), no pooling, conv2d with kernel size 3x3, stride 1/1, pad 1/1, 64x10x7 output
-// Layer 7: 64x10x7 (HWC/little data), 2x2 max pool with stride 2/2, conv2d with kernel size 1x1, stride 1/1, pad 0/0, 512x5x3 output
-// Layer 8: 512x5x3 (HWC/little data), 5x3 avg pool with stride 1/1, no convolution, stride 1/1, pad 0/0, 512x1x1 output
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -72,9 +58,11 @@ void fail(void)
 
 void cnn_wait(void)
 {
-  while ((*((volatile uint32_t *) 0x50100000) & (1<<12)) != 1<<12) ;
-  CNN_COMPLETE; // Signal that processing is complete
-  cnn_time = MXC_TMR_SW_Stop(MXC_TMR0);
+//  while ((*((volatile uint32_t *) 0x50100000) & (1<<12)) != 1<<12) ;
+  while (cnn_time == 0)
+    __WFI(); // Wait for CNN
+//  CNN_COMPLETE; // Signal that processing is complete
+//  cnn_time = MXC_TMR_SW_Stop(MXC_TMR0);
 }
 
 int cnn_load(int8_t mode)
@@ -1571,6 +1559,7 @@ int cnn_check(void)
 
 #define NUM_OUTPUTS 1470
 static int32_t ml_data[NUM_OUTPUTS];
+static q31_t ml_sigmoid[CNN_NUM_OUTPUTS];
 
 int main(void)
 {
@@ -1673,9 +1662,10 @@ int main(void)
         cnn_wait();
 
         cnn_unload((uint32_t *) ml_data);
+        sigmoid_q17p14_q17p14((const q31_t *) ml_data, CNN_NUM_OUTPUTS, ml_sigmoid);
 
         // send embedding to host device
-        uart_write((uint8_t *)ml_data, sizeof(ml_data));
+        uart_write((uint8_t *)ml_sigmoid, sizeof(ml_sigmoid));
 
         break;
       

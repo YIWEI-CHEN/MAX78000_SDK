@@ -73,6 +73,7 @@ export CMSIS_ROOT
 # Source files for this test (add path to VPATH below)
 SRCS  = main_faceid.c cnn.c
 SRCS += utils_faceid.c
+SRCS += sigmoid.c
 
 # Where to find source files for this test
 VPATH  = .
