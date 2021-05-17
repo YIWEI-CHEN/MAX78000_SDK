@@ -47,6 +47,7 @@
 #include "sampledata.h"
 #include "utils_faceid.h"
 #include "cnn.h"
+#include "utils_faceid.h"
 
 volatile uint32_t cnn_time; // Stopwatch
 
@@ -1557,9 +1558,9 @@ int cnn_check(void)
     return CNN_OK;
 }
 
-#define NUM_OUTPUTS 1470
 static int32_t ml_data[NUM_OUTPUTS];
-static q31_t ml_sigmoid[CNN_NUM_OUTPUTS];
+static q31_t ml_sigmoid[NUM_OUTPUTS];
+static q31_t max_box[7] = {0};
 
 int main(void)
 {
@@ -1662,10 +1663,11 @@ int main(void)
         cnn_wait();
 
         cnn_unload((uint32_t *) ml_data);
-        sigmoid_q17p14_q17p14((const q31_t *) ml_data, CNN_NUM_OUTPUTS, ml_sigmoid);
+        sigmoid_q17p14_q17p14((const q31_t *) ml_data, NUM_OUTPUTS, ml_sigmoid);
+        NMS_max(ml_sigmoid, NUM_OUTPUTS, max_box);
 
         // send embedding to host device
-        uart_write((uint8_t *)ml_sigmoid, sizeof(ml_sigmoid));
+        uart_write((uint8_t *)max_box, sizeof(max_box));
 
         break;
       
