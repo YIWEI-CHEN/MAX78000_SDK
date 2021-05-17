@@ -18,7 +18,7 @@ def q_div(a, b):
     return np.int32(temp // b)
 
 
-# // saturate to range of int16_t
+# // saturate to range of int32_t
 # int16_t sat16(int32_t x)
 # {
 # if (x > 0x7FFF) return 0x7FFF;
@@ -109,21 +109,18 @@ def sigmoid_lut(arr, y_q_num, low, high, resolution):
     upper = q17p14((high - resolution))
     lower = q17p14(low)
     for e in arr:
-        if e > upper:
+        if e >= upper:
             res = y_q_num[255]
-        elif e < lower:
+        elif e <= lower:
             res = y_q_num[0]
         else:
             idx = np.int32((e >> 10) + 128)
             y1 = y_q_num[idx]
-            if idx == 255:
-                res = y1
-            else:
-                y2 = y_q_num[idx + 1]
-                # res = y1 + ((y2 - y1) >> 10) * (e & 1023)
-                slope = q_div(y2-y1, 1024)
-                diff = np.int32(e & 1023)
-                res = y1 + q_mul(slope, diff)
+            y2 = y_q_num[idx + 1]
+            # res = y1 + ((y2 - y1) >> 10) * (e & 1023)
+            slope = q_div(y2-y1, 1024)
+            diff = np.int32(e & 1023)
+            res = y1 + q_mul(slope, diff)
         out.append(res)
     return out
 
@@ -145,10 +142,15 @@ def generate_q_sigmoid(max_val=8, samples=256):
     return y_q_num, low, high, resolution
 
 
+def hex_format(q_sigmoid):
+    hex_q_sigmoid = ['0x%08x,'%i for i in q_sigmoid]
+    for i in [hex_q_sigmoid[c:c+8] for c in range(0, len(hex_q_sigmoid), 8) if c % 8 == 0]:
+        print(' ', *i, '\\')
+
 if __name__ == '__main__':
-    # path = 'feature_map.npy'
-    # feature_map = np.load(path)
     q_sigmoid, l, h, resolution = generate_q_sigmoid()
+    # hex_format(q_sigmoid)
+
     test_cases = (
         0,
         -8,
@@ -166,7 +168,9 @@ if __name__ == '__main__':
     print('lut_sigmoid:', val)
     print('sigmoid:', q17p14(sigmoid(test_cases)))
 
-    # x = approx_sigmoid(feature_map)
-    # print('my_func:', x)
-    # x_torch = (torch_approx_sigmoid(feature_map) * (2**14)).numpy().tolist()
-    # print('torch:', x_torch)
+    path = 'feature_map.npy'
+    x = np.load(path)
+    y_lut = sigmoid_lut(x, q_sigmoid, l, h, resolution)
+    print('sigmoid_lut:', y_lut)
+    y_sigmoid = q17p14(sigmoid(x / (2 ** 14))).tolist()
+    print('sigmoid:', y_sigmoid)
