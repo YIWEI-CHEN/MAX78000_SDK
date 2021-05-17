@@ -3,7 +3,7 @@
 //
 
 #include "mxc.h"
-#include "cnn.h"
+#include "utils_faceid.h"
 #include "sigmoid_lut.h"
 
 static const q31_t lut[] = SIGMOID_LUT;

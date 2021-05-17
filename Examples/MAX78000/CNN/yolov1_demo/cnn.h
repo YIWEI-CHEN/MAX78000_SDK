@@ -31,7 +31,6 @@ typedef int16_t q15_t;
 */
 
 /* Number of outputs for this network */
-#define CNN_NUM_OUTPUTS 1470
 
 /* Use this timer to time the inference */
 #define CNN_INFERENCE_TIMER MXC_TMR0
@@ -90,11 +89,5 @@ int cnn_boost_enable(mxc_gpio_regs_t *port, uint32_t pin);
 
 /* Turn off the boost circuit */
 int cnn_boost_disable(mxc_gpio_regs_t *port, uint32_t pin);
-
-void sigmoid_q17p14_q17p14(const q31_t * vec_in, const uint16_t dim_vec, q31_t * p_out);
-
-q31_t q_div(q31_t a, q31_t b);
-
-q31_t q_mul(q31_t a, q31_t b);
 
 #endif // __CNN_H__
