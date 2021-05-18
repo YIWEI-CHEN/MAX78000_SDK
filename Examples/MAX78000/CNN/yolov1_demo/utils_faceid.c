@@ -48,20 +48,27 @@ int wait_for_feedback(){
 
 void load_input(int8_t mode)
 {
-  uint32_t i;
-  i = 0;
+//  uint32_t i;
+//  i = 0;
   const uint32_t *in0 = input_0;
-  uint32_t number;
-  while (i < 56*56*3) {
-    number = ((uint32_t)rxBuffer[i]<<16) | ((uint32_t)rxBuffer[i+1]<<8) | ((uint32_t)rxBuffer[i+2]);
+//  uint32_t number;
+//  while (i < IMG_SIZE * IMG_SIZE) {
+//    while (((*((volatile uint32_t *) 0x50000004) & 1)) != 0); // Wait for FIFO 0
+//    number = ((uint32_t)rxBuffer[i]<<16) | ((uint32_t)rxBuffer[i+1]<<8) | ((uint32_t)rxBuffer[i+2]);
 
-    *in0++ = number;
-    i += 3;
-  }
+//    if (mode > 0){
+//        uart_write((uint8_t*) &number, 4);
+//        uart_write((uint8_t*) (in0++), 4);
+//    }
+
+//    *((volatile uint32_t *) 0x50000008) = *in0++; // Write FIFO 0
+
+//    i += 1;
+//  }
 
   // 3-channel 56x56 data input (9408 bytes total / 3136 bytes per channel):
   // HWC 56x56, channels 0 to 2
-  memcpy32((uint32_t *) 0x50400000, in0, 56*56);
+  memcpy32((uint32_t *) 0x50400000, in0, IMG_SIZE*IMG_SIZE);
 
 }
 
@@ -143,6 +150,7 @@ uint16_t argmax_softmax(q31_t * vec_in, const uint16_t start)
             idx = i;
             cls_score = vec_in[i];
         }
+        vec_in[i] = sigmoid(vec_in[i]);
     }
     inline_softmax_q17p14_q15(vec_in, start, start + NUM_CLASSES);
     return idx;
@@ -154,49 +162,49 @@ void NMS_max(q31_t * vec_in, const uint16_t dim_vec, q31_t* max_box)
     // max_box[7] = {0};
     q31_t confident_threshold = 9011;  // 0.55
 
-    uint8_t found;
-    uint16_t cls_idx;
+    uint16_t cls_idx, max_i = 0;
     uint16_t i, b;
     uint16_t m, n;
 
     q31_t gridX, gridY;
     q31_t centerX, centerY, width, height;
+    q31_t tmp;
     max_box[4] = confident_threshold;
 
     for (i = 0; i < dim_vec; i += NUM_CHANNELS) {
-        found = 0;
         for (b = 0; b < NUM_BOXES; ++b) {
-            if (vec_in[i + 5 * b + 4] > max_box[4])
+            tmp = sigmoid(vec_in[i + 5 * b + 4]);
+            if (tmp > max_box[4])
             {
+                max_i = i;
                 max_box[0] = vec_in[i + 5 * b];
                 max_box[1] = vec_in[i + 5 * b + 1];
                 max_box[2] = vec_in[i + 5 * b + 2];
                 max_box[3] = vec_in[i + 5 * b + 3];
-                max_box[4] = vec_in[i + 5 * b + 4];
-                found = 1;
+                max_box[4] = tmp;
             }
         }
-        if (found == 0)
-            continue;
-
-        cls_idx = argmax_softmax(vec_in, i + BOX_DIMENSION);
-        max_box[5] = vec_in[cls_idx];
-        max_box[6] = cls_idx - i - BOX_DIMENSION;
-
-        m = i / (NUM_GRIDS * NUM_CHANNELS);
-        n = i / NUM_CHANNELS % NUM_GRIDS;
-
-        gridX = GRID_SIZE * m;
-        gridY = GRID_SIZE * n;
-
-        centerX = gridX + q_mul(max_box[0], GRID_SIZE);
-        centerY = gridY + q_mul(max_box[1], GRID_SIZE);
-        width = q_mul(max_box[2], IMG_SIZE);
-        height = q_mul(max_box[3], IMG_SIZE);
-
-        max_box[0] = max(0, (centerX - (width >> 1)));
-        max_box[1] = max(0, (centerY - (height >> 1)));
-        max_box[2] = min(IMG_SIZE - 1, (centerX + (width >> 1)));
-        max_box[3] = min(IMG_SIZE - 1, (centerY + (height >> 1)));
     }
+    for (int j = 0; j < NUM_CLASSES; ++j) {
+        max_box[5 + j] = vec_in[max_i + BOX_DIMENSION + j];
+    }
+    cls_idx = argmax_softmax(max_box, 5);
+    max_box[5] = max_box[cls_idx];
+    max_box[6] = cls_idx - 5;
+
+    m = max_i / (NUM_GRIDS * NUM_CHANNELS);
+    n = max_i / NUM_CHANNELS % NUM_GRIDS;
+
+    gridX = GRID_SIZE * m;
+    gridY = GRID_SIZE * n;
+
+    centerX = gridX + q_mul(sigmoid(max_box[0]), GRID_SIZE);
+    centerY = gridY + q_mul(sigmoid(max_box[1]), GRID_SIZE);
+    width = q_mul(sigmoid(max_box[2]), IMG_SIZE);
+    height = q_mul(sigmoid(max_box[3]), IMG_SIZE);
+
+    max_box[0] = max(0, (centerX - (width >> 1)));
+    max_box[1] = max(0, (centerY - (height >> 1)));
+    max_box[2] = min(IMG_SIZE - 1, (centerX + (width >> 1)));
+    max_box[3] = min(IMG_SIZE - 1, (centerY + (height >> 1)));
 }

@@ -48,6 +48,8 @@ q31_t q_div(q31_t a, q31_t b);
 
 q31_t q_mul(q31_t a, q31_t b);
 
+q31_t sigmoid(q31_t in);
+
 void inline_softmax_q17p14_q15(q31_t * vec_in, const uint16_t start, const uint16_t end);
 
 void NMS_max(q31_t * vec_in, const uint16_t dim_vec, q31_t* max_box);

@@ -65,7 +65,8 @@ q31_t q_mul(q31_t a, q31_t b)
  *
  */
 
-q31_t sigmoid(q31_t in){
+q31_t sigmoid(q31_t in)
+{
     q31_t out;
     q31_t y1, y2, slope, diff;
     uint8_t idx;
