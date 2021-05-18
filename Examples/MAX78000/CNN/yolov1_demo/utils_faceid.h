@@ -42,8 +42,6 @@ int wait_for_feedback();
 
 void load_input(int8_t mode);
 
-void sigmoid_q17p14_q17p14(const q31_t * vec_in, const uint16_t dim_vec, q31_t * p_out);
-
 q31_t q_div(q31_t a, q31_t b);
 
 q31_t q_mul(q31_t a, q31_t b);

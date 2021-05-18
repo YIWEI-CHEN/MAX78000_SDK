@@ -69,6 +69,11 @@ void load_input(int8_t mode)
   // 3-channel 56x56 data input (9408 bytes total / 3136 bytes per channel):
   // HWC 56x56, channels 0 to 2
   memcpy32((uint32_t *) 0x50400000, in0, IMG_SIZE*IMG_SIZE);
+//    int i;
+//    for (i = 0; i < 50176; i++) {
+//        while (((*((volatile uint32_t *) 0x50000004) & 1)) != 0); // Wait for FIFO 0
+//        *((volatile uint32_t *) 0x50000008) = *in0++; // Write FIFO 0
+//    }
 
 }
 

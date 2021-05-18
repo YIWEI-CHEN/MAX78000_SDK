@@ -8,39 +8,39 @@
 
 static const q15_t lut[] = SIGMOID_LUT;
 
-q31_t q_div(q31_t a, q31_t b)
+q15_t q_div(q15_t a, q15_t b)
 {
-    /* pre-multiply by the base (Upscale to Q64 so that the result will be in Q32 format) */
-    int64_t temp = (int64_t)a << 14;
+    /* pre-multiply by the base (Upscale to Q32 so that the result will be in Q16 format) */
+    q31_t temp = (q31_t)a << 15;
     /* Rounding: mid values are rounded up (down for negative values). */
-    /* OR compare most significant bits i.e. if (((temp >> 63) & 1) == ((b >> 31) & 1)) */
+    /* OR compare most significant bits */
     if ((temp >= 0 && b >= 0) || (temp < 0 && b < 0)) {
         temp += (b >> 1);    /* OR shift 1 bit i.e. temp += (b >> 1); */
     } else {
         temp -= (b >> 1);    /* OR shift 1 bit i.e. temp -= (b >> 1); */
     }
-    return (q31_t)(temp / b);
+    return (q15_t)(temp / b);
 }
 
-// saturate to range of int32_t
-q31_t sat32(int64_t x)
+// saturate to range of int16_t
+q15_t sat16(q31_t x)
 {
-    if (x > 2147483647) return 2147483647;
-    else if (x < -2147483648) return -2147483648;
-    else return (q31_t)x;
+    if (x > 32767) return 32767;
+    else if (x < -32768) return -32768;
+    else return (q15_t)x;
 }
 
 
-q31_t q_mul(q31_t a, q31_t b)
+q15_t q_mul(q15_t a, q15_t b)
 {
-    q31_t result;
-    int64_t temp;
-    int64_t K = (1 << (14 - 1));
-    temp = (int64_t)a * (int64_t)b; // result type is operand's type
+    q15_t result;
+    q31_t temp;
+    q31_t K = (1 << (15 - 1));
+    temp = (q31_t)a * (q31_t)b; // result type is operand's type
     // Rounding; mid values are rounded up
     temp += K;
     // Correct by dividing by base and saturate result
-    result = sat32(temp >> 14);
+    result = sat16(temp >> 15);
 
     return result;
 }
@@ -66,28 +66,29 @@ q31_t q_mul(q31_t a, q31_t b)
  *
  */
 
-q31_t sigmoid(q31_t in)
+q15_t sigmoid(q31_t in)
 {
-    q31_t out;
-    q31_t y1, y2, slope, diff;
-    uint8_t idx;
+    q15_t out;
+    q15_t y1, y2, slope, diff;
+    uint16_t idx;
     uint16_t num_entries = 0x1 << NUM_LUT_BITS;
     uint16_t offset = num_entries >> 1;
     uint8_t shift = 18 - NUM_LUT_BITS;
-    q31_t unit = 0x1 << shift;
+    uint16_t unit = 0x1 << shift;
     q31_t upper = 131072 - unit;
     q31_t lower = -131072;
     if (in >= upper)
-        return (q31_t)lut[num_entries - 1];
+        return lut[num_entries - 1];
     else if (in <= lower)
-        return (q31_t)lut[0];
+        return lut[0];
     else {
         idx = (in >> shift) + offset;
-        y1 = (q31_t)lut[idx];
-        y2 = (q31_t)lut[idx + 1];
-        slope = q_div(y2 - y1, unit);
+        y1 = lut[idx];
+        y2 = lut[idx + 1];
+        slope = q_div(y2 - y1, unit * 2);
         diff = in & (unit - 1);
-        out = y1 + q_mul(slope, diff);
+        out = y1 + q_mul(slope, diff * 2);
+//        out = y1 + ((y2 - y1) >> (shift - 1)) * (in & unit - 1);
         return out;
     }
 }
