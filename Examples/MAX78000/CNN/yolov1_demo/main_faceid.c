@@ -1558,8 +1558,8 @@ int cnn_check(void)
     return CNN_OK;
 }
 
-static int32_t ml_data[NUM_OUTPUTS];
-static q31_t ml_sigmoid[NUM_OUTPUTS];
+static int32_t ml_data[CNN_NUM_OUTPUTS];
+static q31_t ml_sigmoid[CNN_NUM_OUTPUTS];
 static q31_t max_box[7] = {0};
 
 int main(void)
@@ -1662,9 +1662,15 @@ int main(void)
 
         cnn_wait();
 
+//        if (cnn_check() != CNN_OK)
+//        {
+//          fail();
+//          return 0;
+//        }
+
         cnn_unload((uint32_t *) ml_data);
-        sigmoid_q17p14_q17p14((const q31_t *) ml_data, NUM_OUTPUTS, ml_sigmoid);
-        NMS_max(ml_sigmoid, NUM_OUTPUTS, max_box);
+        sigmoid_q17p14_q17p14((const q31_t *) ml_data, CNN_NUM_OUTPUTS, ml_sigmoid);
+        NMS_max(ml_sigmoid, CNN_NUM_OUTPUTS, max_box);
 
         // send embedding to host device
         uart_write((uint8_t *)max_box, sizeof(max_box));

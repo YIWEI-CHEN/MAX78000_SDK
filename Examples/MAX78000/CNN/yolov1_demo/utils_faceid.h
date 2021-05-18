@@ -8,17 +8,17 @@
 typedef int32_t q31_t;
 typedef int16_t q15_t;
 
-#define DATA_SIZE_IN (56*56*3)
 #define CONSOLE_UART 0
 #define MXC_UARTn   MXC_UART_GET_UART(CONSOLE_UART)
-#define IMG_SIZE 56
-#define GRID_SIZE 8
-#define NUM_CLASSES 20
-#define NUM_CHANNELS 30
+#define IMG_SIZE 56  // need to change
+#define NUM_CLASSES 20  // need to change
 #define NUM_GRIDS 7
 #define NUM_BOXES 2
-#define NUM_OUTPUTS (7*7*30)
-#define BOX_DIMENSION 10
+#define BOX_DIMENSION (5 * NUM_BOXES)
+#define DATA_SIZE_IN (IMG_SIZE * IMG_SIZE * 3)
+#define GRID_SIZE (IMG_SIZE / NUM_GRIDS)
+#define NUM_CHANNELS (BOX_DIMENSION + NUM_CLASSES)
+#define NUM_LUT_BITS 8
 
 #define max(a,b) \
    ({ __typeof__ (a) _a = (a); \

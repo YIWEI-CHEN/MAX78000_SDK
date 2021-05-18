@@ -6,7 +6,7 @@
 #include "utils_faceid.h"
 #include "sigmoid_lut.h"
 
-static const q31_t lut[] = SIGMOID_LUT;
+static const q15_t lut[] = SIGMOID_LUT;
 
 q31_t q_div(q31_t a, q31_t b)
 {
@@ -66,21 +66,25 @@ q31_t q_mul(q31_t a, q31_t b)
  */
 
 q31_t sigmoid(q31_t in){
-    q31_t upper = 130048;
-    q31_t lower = -131072;
     q31_t out;
     q31_t y1, y2, slope, diff;
     uint8_t idx;
+    uint16_t num_entries = 0x1 << NUM_LUT_BITS;
+    uint16_t offset = num_entries >> 1;
+    uint8_t shift = 18 - NUM_LUT_BITS;
+    q31_t unit = 0x1 << shift;
+    q31_t upper = 131072 - unit;
+    q31_t lower = -131072;
     if (in >= upper)
-        return lut[255];
+        return (q31_t)lut[num_entries - 1];
     else if (in <= lower)
-        return lut[0];
+        return (q31_t)lut[0];
     else {
-        idx = (in >> 10) + 128;
-        y1 = lut[idx];
-        y2 = lut[idx + 1];
-        slope = q_div(y2 - y1, 1024);
-        diff = in & 1023;
+        idx = (in >> shift) + offset;
+        y1 = (q31_t)lut[idx];
+        y2 = (q31_t)lut[idx + 1];
+        slope = q_div(y2 - y1, unit);
+        diff = in & (unit - 1);
         out = y1 + q_mul(slope, diff);
         return out;
     }
