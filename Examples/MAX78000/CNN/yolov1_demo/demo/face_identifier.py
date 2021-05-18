@@ -13,7 +13,7 @@ import time
 import numpy as np
 
 from ai85_adapter import AI85SimulatorAdapter, AI85UartAdapter
-from utils import load_data_arrs, post_process, NMS
+from utils import load_data_arrs
 
 
 class FaceID:
