@@ -45,14 +45,14 @@
 #define BACK_X		0
 #define BACK_Y		280
 
-#define IMAGE_XRES  200
-#define IMAGE_YRES  150
+#define IMAGE_XRES  224 // 200
+#define IMAGE_YRES  224 // 150
 
-#define HEIGHT		160
-#define WIDTH		120
+#define HEIGHT		224 // 160
+#define WIDTH		224 // 120
 #define THICKNESS	4
-#define IMAGE_H		150
-#define IMAGE_W		200
+#define IMAGE_H		224 // 150
+#define IMAGE_W		224 // 200
 #define FRAME_COLOR	0x535A
 
 #define X_START		45
@@ -60,7 +60,7 @@
 
 #define BYTE_PER_PIXEL	2
 
-// Data input: HWC (little data): 160x120x3
-#define DATA_SIZE_IN (160*120*3)
+// Data input: HWC (little data)
+#define DATA_SIZE_IN (HEIGHT*WIDTH*3)
 
 #endif // _FACEID_H_

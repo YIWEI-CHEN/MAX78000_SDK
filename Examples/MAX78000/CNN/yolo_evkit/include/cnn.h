@@ -6,7 +6,7 @@
 **************************************************************************************************/
 
 /*
- * This header file was automatically generated for the faceid network from a template.
+ * This header file was automatically generated for the yolov1 network from a template.
  * Please do not edit; instead, edit the template and regenerate.
  */
 
@@ -23,15 +23,15 @@ typedef int16_t q15_t;
 
 /*
   SUMMARY OF OPS
-  Hardware: 56,295,040 ops (55,234,560 macc; 1,052,800 comp; 7,680 add; 0 mul; 0 bitwise)
+  Hardware: 179,764,928 ops (177,469,376 macc; 2,295,552 comp; 0 add; 0 mul; 0 bitwise)
 
   RESOURCE USAGE
-  Weight memory: 176,048 bytes out of 442,368 bytes total (40%)
-  Bias memory:   0 bytes out of 2,048 bytes total (0%)
+  Weight memory: 195,200 bytes out of 442,368 bytes total (44%)
+  Bias memory:   15 bytes out of 2,048 bytes total (1%)
 */
 
 /* Number of outputs for this network */
-#define CNN_NUM_OUTPUTS 512
+#define CNN_NUM_OUTPUTS 735
 
 /* Use this timer to time the inference */
 #define CNN_INFERENCE_TIMER MXC_TMR0
@@ -42,8 +42,10 @@ typedef int16_t q15_t;
 #define SYS_START LED_On(0)
 #define SYS_COMPLETE LED_Off(0)
 
-/* Unload data from accelerator and run software SoftMax */
+/* Run software SoftMax on unloaded data */
 void softmax_q17p14_q15(const q31_t * vec_in, const uint16_t dim_vec, q15_t * p_out);
+/* Shift the input, then calculate SoftMax */
+void softmax_shift_q17p14_q15(q31_t * vec_in, const uint16_t dim_vec, uint8_t in_shift, q15_t * p_out);
 
 /* Stopwatch - holds the runtime when accelerator finishes */
 extern volatile uint32_t cnn_time;

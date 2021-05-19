@@ -261,7 +261,7 @@ static void run_cnn(int x_offset, int y_offset)
 {
 	uint32_t  imgLen;
 	uint32_t  w, h;
-	static uint32_t noface_count=0;
+//	static uint32_t noface_count=0;
 	/* Get current time */
 	uint32_t pass_time = 0;
 	uint8_t   *raw;
@@ -348,7 +348,8 @@ static void run_cnn(int x_offset, int y_offset)
 
 	pass_time = utils_get_time_ms();
 
-	int pResult = calculate_minDistance((uint8_t*)(raw));
+//	int pResult = calculate_minDistance((uint8_t*)(raw));
+    int pResult = 0;
 
 	PR_INFO("Embedding time : %d", utils_get_time_ms() - pass_time);
 	PR_INFO("Result = %d \n",pResult);
@@ -356,75 +357,75 @@ static void run_cnn(int x_offset, int y_offset)
 	if ( pResult == 0 ) {
 		char *name;
 
-		uint8_t *counter;
-		uint8_t counter_len;
-		get_min_dist_counter(&counter, &counter_len);
+//		uint8_t *counter;
+//		uint8_t counter_len;
+//		get_min_dist_counter(&counter, &counter_len);
 
-		name = "";
+		name = "Yi-Wei Chen";
 		prev_decision = decision;
 		decision = -5;
 
-		PR_INFO("counter_len: %d,  %d,%d,%d\n",counter_len,counter[0],counter[1],counter[2]);
-#if 1
-		for(uint8_t id=0; id<counter_len; ++id){
-			if (counter[id] >= (uint8_t)(closest_sub_buffer_size*0.8)){   // >80%  detection
-				name = get_subject(id);
-				decision = id;
-				noface_count = 0;
-				PR_DEBUG("Status: %s \n", name);
-				PR_INFO("Detection: %s: %d", name, counter[id]);
-				break;
-			} else if (counter[id] >= (uint8_t)(closest_sub_buffer_size*0.4)){ // >%40 adjust
-				name = "Adjust Face";
-				decision = -2;
-				noface_count = 0;
-				PR_DEBUG("Status: %s \n", name);
-				PR_INFO("Detection: %s: %d", name, counter[id]);
-				break;
-			} else if (counter[id] > closest_sub_buffer_size*0.2){   //>>20% unknown
-				name = "Yi-Unknown";
-				decision = -1;
-				noface_count = 0;
-				PR_DEBUG("Status: %s \n", name);
-				PR_INFO("Detection: %s: %d", name, counter[id]);
-				break;
-			}
-			else if (counter[id] > closest_sub_buffer_size*0.1){   //>> 10% transition
-				name = "";
-				decision = -3;
-				noface_count = 0;
-				PR_DEBUG("Status: %s \n", name);
-				PR_INFO("Detection: %s: %d", name, counter[id]);
-			}
-			else
-			{
-				noface_count ++;
-				if (noface_count > 10)
-				{
-					name = "No face";
-					decision = -4;
-					noface_count --;
-					PR_INFO("Detection: %s: %d", name, counter[id]);
-				}
-			}
-		}
-#else
-		for(uint8_t id=0; id<counter_len; ++id){
-			if (counter[id] >= (closest_sub_buffer_size-4)){
-				name = get_subject(id);
-				decision = id;
-				break;
-			} else if (counter[id] >= (closest_sub_buffer_size/2+1)){
-				name = "Adjust Face";
-				decision = -2;
-				break;
-			} else if (counter[id] > 4){
-				name = "Unknown";
-				decision = -1;
-				break;
-			}
-		}
-#endif
+//		PR_INFO("counter_len: %d,  %d,%d,%d\n",counter_len,counter[0],counter[1],counter[2]);
+//#if 1
+//		for(uint8_t id=0; id<counter_len; ++id){
+//			if (counter[id] >= (uint8_t)(closest_sub_buffer_size*0.8)){   // >80%  detection
+//				name = get_subject(id);
+//				decision = id;
+//				noface_count = 0;
+//				PR_DEBUG("Status: %s \n", name);
+//				PR_INFO("Detection: %s: %d", name, counter[id]);
+//				break;
+//			} else if (counter[id] >= (uint8_t)(closest_sub_buffer_size*0.4)){ // >%40 adjust
+//				name = "Adjust Face";
+//				decision = -2;
+//				noface_count = 0;
+//				PR_DEBUG("Status: %s \n", name);
+//				PR_INFO("Detection: %s: %d", name, counter[id]);
+//				break;
+//			} else if (counter[id] > closest_sub_buffer_size*0.2){   //>>20% unknown
+//				name = "Yi-Unknown";
+//				decision = -1;
+//				noface_count = 0;
+//				PR_DEBUG("Status: %s \n", name);
+//				PR_INFO("Detection: %s: %d", name, counter[id]);
+//				break;
+//			}
+//			else if (counter[id] > closest_sub_buffer_size*0.1){   //>> 10% transition
+//				name = "";
+//				decision = -3;
+//				noface_count = 0;
+//				PR_DEBUG("Status: %s \n", name);
+//				PR_INFO("Detection: %s: %d", name, counter[id]);
+//			}
+//			else
+//			{
+//				noface_count ++;
+//				if (noface_count > 10)
+//				{
+//					name = "No face";
+//					decision = -4;
+//					noface_count --;
+//					PR_INFO("Detection: %s: %d", name, counter[id]);
+//				}
+//			}
+//		}
+//#else
+//		for(uint8_t id=0; id<counter_len; ++id){
+//			if (counter[id] >= (closest_sub_buffer_size-4)){
+//				name = get_subject(id);
+//				decision = id;
+//				break;
+//			} else if (counter[id] >= (closest_sub_buffer_size/2+1)){
+//				name = "Adjust Face";
+//				decision = -2;
+//				break;
+//			} else if (counter[id] > 4){
+//				name = "Unknown";
+//				decision = -1;
+//				break;
+//			}
+//		}
+//#endif
 
 		PR_DEBUG("Decision: %d Name:%s \n",decision, name);
 
