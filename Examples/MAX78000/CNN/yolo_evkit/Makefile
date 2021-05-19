@@ -79,6 +79,7 @@ SRCS += src/state_home.c
 SRCS += src/state_faceID.c
 SRCS += src/cnn.c
 SRCS += src/embedding_process.c
+SRCS += src/sigmoid.c
 
 # Where to find source files for this test
 VPATH=.

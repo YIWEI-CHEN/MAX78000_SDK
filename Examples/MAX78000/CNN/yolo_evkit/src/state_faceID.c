@@ -265,6 +265,7 @@ static void run_cnn(int x_offset, int y_offset)
 	/* Get current time */
 	uint32_t pass_time = 0;
 	uint8_t   *raw;
+    q31_t max_box[5 + NUM_CLASSES + 2] = {0};
 
 	// Get the details of the image from the camera driver.
 	camera_get_image(&raw, &imgLen, &w, &h);
@@ -349,6 +350,10 @@ static void run_cnn(int x_offset, int y_offset)
 	pass_time = utils_get_time_ms();
 
 //	int pResult = calculate_minDistance((uint8_t*)(raw));
+    NMS_max((q31_t *)raw, CNN_NUM_OUTPUTS, max_box);
+    for (int i = 0; i < (5 + NUM_CLASSES + 2); ++i) {
+        printf("max_box[%d] = %d \n", i, max_box[i]);
+    }
     int pResult = 0;
 
 	PR_INFO("Embedding time : %d", utils_get_time_ms() - pass_time);

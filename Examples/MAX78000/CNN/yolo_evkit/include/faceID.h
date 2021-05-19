@@ -61,6 +61,14 @@
 #define BYTE_PER_PIXEL	2
 
 // Data input: HWC (little data)
-#define DATA_SIZE_IN (HEIGHT*WIDTH*3)
+#define DATA_SIZE_IN (HEIGHT * WIDTH * 3)
+
+#define NUM_CLASSES 5  // need to change
+#define NUM_GRIDS 7
+#define NUM_BOXES 2
+#define BOX_DIMENSION (5 * NUM_BOXES)
+#define GRID_SIZE (WIDTH / NUM_GRIDS)
+#define NUM_CHANNELS (BOX_DIMENSION + NUM_CLASSES)
+#define NUM_LUT_BITS 8
 
 #endif // _FACEID_H_

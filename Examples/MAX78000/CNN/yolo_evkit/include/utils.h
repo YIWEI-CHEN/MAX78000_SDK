@@ -39,7 +39,19 @@
 #include <stdint.h>
 #include "uart.h"
 
+typedef int32_t q31_t;
+typedef int16_t q15_t;
+
 /*****************************     MACROS    *********************************/
+#define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
 
 
 /*****************************     VARIABLES *********************************/
@@ -50,5 +62,15 @@
 uint32_t utils_get_time_ms(void);
 
 void utils_send_bytes(mxc_uart_regs_t *uart, uint8_t *ptr, int length);
+
+q31_t q_div(q31_t a, q31_t b);
+
+q31_t q_mul(q31_t a, q31_t b);
+
+q31_t sigmoid(q31_t in);
+
+void inline_softmax_q17p14_q15(q31_t * vec_in, const uint16_t start, const uint16_t end);
+
+void NMS_max(q31_t * vec_in, const uint16_t dim_vec, q31_t* max_box);
 
 #endif // _UTILS_H_
