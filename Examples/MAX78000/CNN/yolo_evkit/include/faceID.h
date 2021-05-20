@@ -55,7 +55,8 @@
 #define IMAGE_W		224 // 200
 #define FRAME_COLOR	0x535A
 
-#define X_START		45
+// Show Image from Camera
+#define X_START		8
 #define Y_START		30
 
 #define BYTE_PER_PIXEL	2
@@ -70,5 +71,6 @@
 #define GRID_SIZE (WIDTH / NUM_GRIDS)
 #define NUM_CHANNELS (BOX_DIMENSION + NUM_CLASSES)
 #define NUM_LUT_BITS 8
+#define MAX_BOX_SIZE (5 + NUM_CLASSES + 2)
 
 #endif // _FACEID_H_

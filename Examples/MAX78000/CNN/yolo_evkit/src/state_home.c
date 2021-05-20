@@ -59,7 +59,7 @@ static void screen_faceID_home(void);
 
 static text_t screen_msg[] = {
     // info
-    { (char*) "FACEID DEMO", 11},
+    { (char*) "YOLO DEMO", strlen("YOLO DEMO")},
     { (char*) "Start DEMO", 10},
 };
 
@@ -80,7 +80,7 @@ static void screen_faceID_home(void)
     MXC_TFT_SetBackGroundColor(4);
     MXC_TFT_ShowImage(3, 5, bitmap);
 
-    MXC_TFT_PrintFont(98, 5, font, &screen_msg[0],  NULL);  // FACEID DEMO
+    MXC_TFT_PrintFont(98, 5, font, &screen_msg[0],  NULL);  // YOLO DEMO
     MXC_TFT_PrintFont(X_START+THICKNESS, Y_START+THICKNESS, font, &screen_msg[1],  NULL);  // START DEMO
     // texts
 

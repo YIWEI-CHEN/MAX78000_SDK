@@ -61,15 +61,15 @@ typedef void (*ScreenFunc)(void);
 /************************************ VARIABLES ******************************/
 volatile uint32_t cnn_time; // Stopwatch
 
-static void process_img(void);
-static void run_cnn(int x_offset, int y_offset);
+static void process_img(q31_t* max_box);
+static void run_cnn(int x_offset, int y_offset, q31_t* max_box);
 static int init(void);
 static int key_process(int key);
 
 #ifdef TFT_ENABLE
 static text_t screen_msg[] = {
     // info
-    { (char*) "FACEID DEMO", strlen("FACEID DEMO")},
+    { (char*) "YOLO DEMO", strlen("YOLO DEMO")},
 	{ (char *) "Process Time:",  strlen("Process Time:")},
 };
 #ifdef BOARD_EVKIT_V1
@@ -98,8 +98,8 @@ static void screen_faceID(void)
 #ifdef BOARD_EVKIT_V1
 	MXC_TFT_ShowImage(BACK_X, BACK_Y, left_arrow_bmp); // back button icon
 #endif
-	MXC_TFT_PrintFont(98, 5, font, &screen_msg[0], NULL);  // FACEID DEMO
-	MXC_TFT_PrintFont(12, 240, font, &screen_msg[1], NULL);  // Process Time:
+	MXC_TFT_PrintFont(98, 5, font, &screen_msg[0], NULL);  // YOLO DEMO
+	MXC_TFT_PrintFont(52, 260, font, &screen_msg[1], NULL);  // Process Time:
 	// texts
 #ifdef TS_ENABLE
 	MXC_TS_RemoveAllButton();
@@ -111,6 +111,7 @@ static void screen_faceID(void)
 static int init(void)
 {
 	uint32_t run_count = 0;
+    q31_t max_box[MAX_BOX_SIZE] = {0};
 #ifdef TFT_ENABLE
 	screen_faceID();
 #endif
@@ -129,8 +130,7 @@ static int init(void)
 		/* Check pressed touch screen key */
         int key = MXC_TS_GetKey();
         if (key > 0) {
-		key_process(key);
-
+		    key_process(key);
         }
 
 		if (state_get_current() != &g_state){
@@ -143,16 +143,16 @@ static int init(void)
 #if (PRINT_TIME==1)
 			process_time = utils_get_time_ms();
 #endif
-			process_img();
 
-			run_cnn(0, 0);
-			if ((run_count % 2) == 0){
-				run_cnn(-10, -10);
-				run_cnn(10, 10);
-			} else {
-				run_cnn(-10, 10);
-				run_cnn(10, -10);
-			}
+			run_cnn(0, 0, max_box);
+			process_img(max_box);
+//			if ((run_count % 2) == 0){
+//				run_cnn(-10, -10);
+//				run_cnn(10, 10);
+//			} else {
+//				run_cnn(-10, 10);
+//				run_cnn(10, -10);
+//			}
 			run_count++;
 
 #if (PRINT_TIME==1)
@@ -188,7 +188,7 @@ static int key_process(int key)
     return 0;
 }
 
-static void process_img(void)
+static void process_img(q31_t* max_box)
 {
 	uint32_t pass_time = 0;
 	uint32_t imgLen;
@@ -205,40 +205,35 @@ static void process_img(void)
 
 	pass_time = utils_get_time_ms();
 
-	image = (uint16_t*)raw; // 2bytes per pixel RGB565
+//	image = (uint16_t*)raw; // 2bytes per pixel RGB565
 
 	// left line
-	image+=((IMAGE_H - (WIDTH+2*THICKNESS))/2)*IMAGE_W;
 	for (int i = 0; i<THICKNESS; i++) {
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
-		for(int j=0; j< HEIGHT+2*THICKNESS; j++) {
+	    image = ((uint16_t*)raw) + (max_box[0] + i) * IMAGE_W + max_box[1];
+		for(int j=max_box[1]; j <= max_box[3]; j++) {
 			*(image++) = FRAME_COLOR; //color
 		}
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
 	}
 
-	//right line
-	image = ((uint16_t*)raw) + (((IMAGE_H - (WIDTH+2*THICKNESS))/2) + WIDTH + THICKNESS )*IMAGE_W;
-	for (int i = 0; i<THICKNESS; i++) {
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
-		for(int j =0; j< HEIGHT+2*THICKNESS; j++) {
+    // right line
+    for (int i = 0; i<THICKNESS; i++) {
+	    image = ((uint16_t*)raw) + (max_box[2] + i) * IMAGE_W + max_box[1];
+		for(int j=max_box[1]; j <= max_box[3]; j++) {
 			*(image++) = FRAME_COLOR; //color
 		}
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
 	}
 
-	//top + bottom lines
-	image = ((uint16_t*)raw) + ((IMAGE_H - (WIDTH+2*THICKNESS))/2)*IMAGE_W;
-	for (int i = 0; i<WIDTH+2*THICKNESS; i++) {
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
+    // top + bottom lines
+	for (int i = max_box[0]; i < max_box[2] + THICKNESS; i++) {
+		image = ((uint16_t*)raw) + i * IMAGE_W + max_box[1];
+		// top lines
 		for(int j =0; j< THICKNESS; j++) {
 			*(image++) = FRAME_COLOR; //color
 		}
-		image+=HEIGHT;
+		image += (max_box[3] - max_box[1] - THICKNESS);
 		for(int j =0; j< THICKNESS; j++) {
 			*(image++) = FRAME_COLOR; //color
 		}
-		image+=((IMAGE_W - (HEIGHT+2*THICKNESS))/2);
 	}
 
 	PR_INFO("Frame drawing time : %d", utils_get_time_ms() - pass_time);
@@ -257,7 +252,7 @@ static void process_img(void)
 	PR_INFO("Screen print time : %d", utils_get_time_ms() - pass_time);
 }
 
-static void run_cnn(int x_offset, int y_offset)
+static void run_cnn(int x_offset, int y_offset, q31_t* max_box)
 {
 	uint32_t  imgLen;
 	uint32_t  w, h;
@@ -265,7 +260,7 @@ static void run_cnn(int x_offset, int y_offset)
 	/* Get current time */
 	uint32_t pass_time = 0;
 	uint8_t   *raw;
-    q31_t max_box[5 + NUM_CLASSES + 2] = {0};
+    q31_t ml_data[CNN_NUM_OUTPUTS];
 
 	// Get the details of the image from the camera driver.
 	camera_get_image(&raw, &imgLen, &w, &h);
@@ -324,10 +319,10 @@ static void run_cnn(int x_offset, int y_offset)
 	cnn_load_time_string.data = string_time;
 	cnn_load_time_string.len = strlen(string_time);
 
-	area_t area = {150, 240, 50, 30};
+	area_t area = {190, 260, 50, 30};
 	MXC_TFT_ClearArea(&area, 4);
 
-	MXC_TFT_PrintFont(150, 240, font, &cnn_load_time_string,  NULL);  // RunCNN
+	MXC_TFT_PrintFont(190, 260, font, &cnn_load_time_string,  NULL);  // RunCNN
 #endif
 
 	pass_time = utils_get_time_ms();
@@ -339,7 +334,7 @@ static void run_cnn(int x_offset, int y_offset)
 
 	pass_time = utils_get_time_ms();
 
-	cnn_unload((uint32_t*)(raw));
+	cnn_unload((uint32_t*) ml_data);
 
 	cnn_stop();
 	// Disable CNN clock to save power
@@ -350,8 +345,8 @@ static void run_cnn(int x_offset, int y_offset)
 	pass_time = utils_get_time_ms();
 
 //	int pResult = calculate_minDistance((uint8_t*)(raw));
-    NMS_max((q31_t *)raw, CNN_NUM_OUTPUTS, max_box);
-    for (int i = 0; i < (5 + NUM_CLASSES + 2); ++i) {
+    NMS_max(ml_data, CNN_NUM_OUTPUTS, max_box);
+    for (int i = 0; i < MAX_BOX_SIZE; ++i) {
         printf("max_box[%d] = %d \n", i, max_box[i]);
     }
     int pResult = 0;
@@ -360,13 +355,14 @@ static void run_cnn(int x_offset, int y_offset)
 	PR_INFO("Result = %d \n",pResult);
 
 	if ( pResult == 0 ) {
-		char *name;
+		char name[9];
+        snprintf(name, 9, "Class: %d", max_box[MAX_BOX_SIZE - 1]);
 
 //		uint8_t *counter;
 //		uint8_t counter_len;
 //		get_min_dist_counter(&counter, &counter_len);
 
-		name = "Yi-Wei Chen";
+//		name = "Yi-Wei Chen";
 		prev_decision = decision;
 		decision = -5;
 
@@ -435,7 +431,7 @@ static void run_cnn(int x_offset, int y_offset)
 		PR_DEBUG("Decision: %d Name:%s \n",decision, name);
 
 #ifdef TFT_ENABLE
-		if(decision != prev_decision){
+//		if(decision != prev_decision){
 			text_t printResult;
 
 			printResult.data = name;
@@ -445,7 +441,7 @@ static void run_cnn(int x_offset, int y_offset)
 			MXC_TFT_ClearArea(&area, 4);
 			MXC_TFT_PrintFont(CAPTURE_X, CAPTURE_Y, font, &printResult,  NULL);  // RunCNN
 
-		}
+//		}
 #endif
 	}
 }

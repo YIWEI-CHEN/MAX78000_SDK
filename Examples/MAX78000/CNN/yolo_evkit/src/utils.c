@@ -188,8 +188,8 @@ void NMS_max(q31_t * vec_in, const uint16_t dim_vec, q31_t* max_box)
         max_box[5 + j] = vec_in[max_i + BOX_DIMENSION + j];
     }
     cls_idx = argmax_softmax(max_box, 5);
-    max_box[5 + NUM_CLASSES] = max_box[cls_idx];
-    max_box[5 + NUM_CLASSES + 1] = cls_idx - 5;
+    max_box[MAX_BOX_SIZE - 2] = max_box[cls_idx];
+    max_box[MAX_BOX_SIZE - 1] = cls_idx - 5;
 
     m = max_i / (NUM_GRIDS * NUM_CHANNELS);
     n = max_i / NUM_CHANNELS % NUM_GRIDS;
